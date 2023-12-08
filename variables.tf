@@ -58,6 +58,10 @@ variable "node_groups" {
       subnet_type    = optional(string, "private")
       instance_types = optional(list(string), null)
       labels         = optional(map(string), null)
+      taints = optional(map(object({
+        value  = optional(string)
+        effect = string
+      })), {})
       scaling = object({
         desired_size = number
         min_size     = number
@@ -110,6 +114,16 @@ variable "fargate_profile_iam_role_name" {
   description = "IAM role name to be used by fargate profiles"
   type        = string
   default     = null
+}
+
+# Addons
+variable "addons" {
+  description = "Addons to be installed"
+  type = map(object({
+    version = string
+  }))
+  default  = {}
+  nullable = false
 }
 
 # AWS auth
