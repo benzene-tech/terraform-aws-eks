@@ -1,8 +1,8 @@
 resource "aws_eks_node_group" "this" {
   for_each = var.node_groups
 
-  cluster_name    = aws_eks_cluster.this.name
   node_group_name = each.key
+  cluster_name    = aws_eks_cluster.this.name
   version         = aws_eks_cluster.this.version
   ami_type        = each.value.ami_type
   instance_types  = each.value.instance_types
