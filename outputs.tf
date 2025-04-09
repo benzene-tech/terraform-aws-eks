@@ -1,14 +1,11 @@
 output "name" {
   description = "Cluster name"
   value       = aws_eks_cluster.this.id
+}
 
-  depends_on = [
-    aws_eks_access_policy_association.admin,
-    aws_eks_access_policy_association.admin_view,
-    aws_eks_access_policy_association.cluster_admin,
-    aws_eks_access_policy_association.edit,
-    aws_eks_access_policy_association.view
-  ]
+output "auto_mode" {
+  description = "Determine whether EKS auto mode is enabled or not"
+  value       = try(var.auto_mode.enable, false)
 }
 
 output "addons" {

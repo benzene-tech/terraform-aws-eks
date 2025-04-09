@@ -1,5 +1,5 @@
 resource "aws_eks_node_group" "this" {
-  for_each = var.node_groups
+  for_each = { for name, config in var.node_groups : name => config if config.enable }
 
   node_group_name = each.key
   cluster_name    = aws_eks_cluster.this.name

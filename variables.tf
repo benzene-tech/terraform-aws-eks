@@ -31,74 +31,65 @@ variable "public_access_cidrs" {
   default     = null
 }
 
-variable "cluster_subnet" {
+variable "subnet" {
   description = "Subnet type where the EKS cluster will be created"
   type        = string
   default     = "private"
   nullable    = false
 
   validation {
-    condition     = contains(["public", "private"], var.cluster_subnet)
+    condition     = contains(["public", "private"], var.subnet)
     error_message = "Subnet type should be either 'public' or 'private'"
   }
 }
 
-variable "cluster_role" {
-  description = "IAM role name for EKS cluster"
+variable "auto_mode" {
+  description = "Determine whether to enable or disable EKS auto mode"
+  type = object({
+    enable     = optional(bool, true)
+    node_pools = optional(list(string), null)
+  })
+  default  = {}
+  nullable = false
+}
+
+variable "upgrade_policy" {
+  description = "Upgrade policy for the EKS cluster"
   type        = string
+  default     = "STANDARD"
   nullable    = false
 }
 
-variable "access_entries" {
-  description = "IAM access entries"
-  type = map(object({
-    groups = optional(list(string), null)
-    policies = optional(map(object({
-      scope      = string
-      namespaces = optional(list(string), null)
-    })), null)
-  }))
-  default  = {}
-  nullable = false
-
-  validation {
-    condition = alltrue([for entry in var.access_entries : (length(setintersection(toset([
-      "AmazonEKSAdminPolicy",
-      "AmazonEKSAdminViewPolicy",
-      "AmazonEKSClusterAdminPolicy",
-      "AmazonEKSEditPolicy",
-      "AmazonEKSViewPolicy"
-    ]), toset(keys(entry.policies)))) > 0)])
-    error_message = "Policy should be one among 'AmazonEKSAdminPolicy', 'AmazonEKSAdminViewPolicy', 'AmazonEKSClusterAdminPolicy', 'AmazonEKSEditPolicy' or 'AmazonEKSViewPolicy'"
-  }
-
-  validation {
-    condition = alltrue(flatten([for entry in var.access_entries : [
-      for policy in entry.policies : contains(["cluster", "namespace"], policy.scope)
-    ]]))
-    error_message = "Access scope should be either 'cluster' or 'namespace'"
-  }
-
-  validation {
-    condition = alltrue(flatten([for entry in var.access_entries : [
-      for policy in entry.policies : (try(length(policy.namespaces), 0) == 0) if policy.scope == "cluster"
-    ]]))
-    error_message = "Namespaces not required if access scope is 'cluster'"
-  }
-
-  validation {
-    condition = alltrue(flatten([for entry in var.access_entries : [
-      for policy in entry.policies : (try(length(policy.namespaces), 0) > 0) if policy.scope == "namespace"
-    ]]))
-    error_message = "Namespaces cannot be empty if access scope is 'namespace'"
-  }
+variable "bootstrap_cluster_creator" {
+  description = "Determine whether to bootstrap the cluster creator with admin permissions in cluster's access config"
+  type        = bool
+  default     = false
+  nullable    = false
 }
 
-# Node Group
+variable "role" {
+  description = "IAM role name for EKS cluster"
+  type        = string
+  default     = null
+}
+
+variable "node_role" {
+  description = "IAM role name to be used by EC2 nodes"
+  type        = string
+  default     = null
+}
+
+variable "fargate_profile_pod_execution_role" {
+  description = "IAM role name to be used by Fargate profiles"
+  type        = string
+  default     = null
+}
+
 variable "node_groups" {
   description = "Node groups to be created"
   type = map(object(
     {
+      enable         = optional(bool, true)
       ami_type       = optional(string, null)
       instance_types = optional(list(string), null)
       capacity_type  = optional(string, "ON_DEMAND")
@@ -138,17 +129,11 @@ variable "node_groups" {
   }
 }
 
-variable "node_group_role" {
-  description = "IAM role name to be used by node groups"
-  type        = string
-  default     = null
-}
-
-# Fargate
 variable "fargate_profiles" {
   description = "Fargate profiles to be created"
   type = map(object(
     {
+      enable = optional(bool, true)
       selectors = set(object(
         {
           namespace = string
@@ -160,13 +145,6 @@ variable "fargate_profiles" {
   default  = {}
   nullable = false
 }
-
-variable "fargate_profile_pod_execution_role" {
-  description = "IAM role name to be used by fargate profiles"
-  type        = string
-  default     = null
-}
-
 
 variable "tags" {
   description = "Tags to be assigned to the resources"

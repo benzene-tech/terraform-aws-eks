@@ -23,37 +23,37 @@ data "aws_subnets" "this" {
 }
 
 data "aws_iam_role" "cluster" {
-  name = var.cluster_role
+  name = var.role
 }
 
 data "aws_iam_role" "node_group" {
-  count = length(var.node_groups) != 0 ? 1 : 0
+  count = try(var.auto_mode.enable, false) || anytrue(local.node_groups_status) ? 1 : 0
 
-  name = var.node_group_role
+  name = var.node_role
 
   lifecycle {
     precondition {
-      condition     = var.node_group_role != null
-      error_message = "'node_group_role' variable is required to create Node groups"
+      condition     = var.node_role != null
+      error_message = "'node_role' is required to create EC2 nodes"
     }
   }
 }
 
 data "aws_iam_role" "fargate_profile" {
-  count = length(var.fargate_profiles) != 0 ? 1 : 0
+  count = anytrue(local.fargate_profile_status) ? 1 : 0
 
   name = var.fargate_profile_pod_execution_role
 
   lifecycle {
     precondition {
       condition     = var.fargate_profile_pod_execution_role != null
-      error_message = "'fargate_profile_pod_execution_role' variable is required to create Fargate profiles"
+      error_message = "'fargate_profile_pod_execution_role' is required to create Fargate profiles"
     }
   }
 }
 
-data "aws_iam_role" "access_entries" {
-  for_each = var.access_entries
+data "aws_iam_role" "addon" {
+  for_each = { for name, config in local.addons : name => config.pod_identity_association.role if can(config.pod_identity_association) && length(setintersection(local.compatible_computes, toset(config.compatible_computes))) > 0 }
 
-  name = each.key
+  name = each.value
 }
