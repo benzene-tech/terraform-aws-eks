@@ -1,9 +1,9 @@
-data "aws_iam_role" "cluster" {
-  name = var.role
+data "aws_eks_cluster" "this" {
+  name = var.cluster
 }
 
-data "aws_iam_role" "node" {
-  count = try(var.auto_mode.enable, false) ? 1 : 0
+data "aws_iam_role" "this" {
+  count = alltrue([for _, node_groups in var.node_groups : node_groups.enable]) ? 1 : 0
 
   name = var.node_role
 

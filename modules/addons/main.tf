@@ -1,7 +1,7 @@
 resource "aws_eks_addon" "this" {
   for_each = { for name, config in local.addons : name => config if length(setintersection(local.compatible_computes, toset(config.compatible_computes))) > 0 }
 
-  cluster_name  = aws_eks_cluster.this.id
+  cluster_name  = data.aws_eks_cluster.this.name
   addon_name    = each.key
   addon_version = lookup(each.value, "version", null)
 
@@ -13,6 +13,4 @@ resource "aws_eks_addon" "this" {
       service_account = pod_identity_association.value.service_account
     }
   }
-
-  depends_on = [aws_eks_node_group.this, aws_eks_fargate_profile.default, aws_eks_fargate_profile.this]
 }

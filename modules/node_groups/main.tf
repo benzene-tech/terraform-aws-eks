@@ -2,14 +2,14 @@ resource "aws_eks_node_group" "this" {
   for_each = { for name, config in var.node_groups : name => config if config.enable }
 
   node_group_name = each.key
-  cluster_name    = aws_eks_cluster.this.name
-  version         = aws_eks_cluster.this.version
+  cluster_name    = data.aws_eks_cluster.this.id
+  version         = data.aws_eks_cluster.this.version
   ami_type        = each.value.ami_type
   instance_types  = each.value.instance_types
   capacity_type   = each.value.capacity_type
   labels          = each.value.labels
-  subnet_ids      = data.aws_subnets.this[each.value.subnet_type].ids
-  node_role_arn   = one(data.aws_iam_role.node_group[*].arn)
+  subnet_ids      = each.value.subnets
+  node_role_arn   = one(data.aws_iam_role.this[*].arn)
 
   dynamic "taint" {
     for_each = each.value.taints

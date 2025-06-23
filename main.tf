@@ -5,16 +5,16 @@ resource "aws_eks_cluster" "this" {
   bootstrap_self_managed_addons = false
 
   vpc_config {
-    subnet_ids              = data.aws_subnets.this[var.subnet].ids
+    subnet_ids              = var.subnets
     public_access_cidrs     = var.enable_public_access_endpoint ? var.public_access_cidrs : null
     endpoint_public_access  = var.enable_public_access_endpoint
     endpoint_private_access = true
   }
 
   compute_config {
-    enabled       = var.auto_mode.enable
-    node_pools    = var.auto_mode.node_pools
-    node_role_arn = one(data.aws_iam_role.node_group[*].arn)
+    enabled       = try(var.auto_mode.enable, false)
+    node_pools    = try(var.auto_mode.node_pools, null)
+    node_role_arn = one(data.aws_iam_role.node[*].arn)
   }
 
   kubernetes_network_config {
@@ -39,18 +39,4 @@ resource "aws_eks_cluster" "this" {
   }
 
   tags = var.tags
-
-  lifecycle {
-    precondition {
-      condition     = length(data.aws_subnets.this[var.subnet].ids) > 1
-      error_message = "Required at least two subnets of same type to create EKS cluster"
-    }
-  }
-}
-
-check "cluster_subnet" {
-  assert {
-    condition     = var.subnet == "private"
-    error_message = "AWS recommends to create EKS clusters in private subnets, if possible"
-  }
 }
