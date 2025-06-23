@@ -3,7 +3,7 @@ data "aws_eks_cluster" "this" {
 }
 
 data "aws_iam_role" "this" {
-  count = alltrue([for _, fargate_profile in var.fargate_profiles : fargate_profile.enable]) ? 1 : 0
+  count = var.enable ? 1 : 0
 
   name = var.pod_execution_role
 

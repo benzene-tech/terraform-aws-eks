@@ -3,7 +3,7 @@ data "aws_eks_cluster" "this" {
 }
 
 data "aws_iam_role" "this" {
-  count = alltrue([for _, node_groups in var.node_groups : node_groups.enable]) ? 1 : 0
+  count = var.enable ? 1 : 0
 
   name = var.node_role
 

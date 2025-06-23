@@ -9,33 +9,32 @@ variable "cluster" {
   type        = string
 }
 
-variable "subnets" {
-  description = "VPC subnets ID(s) where the Fargate profiles will be created"
-  type        = list(string)
-}
-
 variable "pod_execution_role" {
   description = "IAM role name to be used by Fargate profiles"
   type        = string
   default     = null
 }
 
-variable "fargate_profiles" {
-  description = "Fargate profiles to be created"
-  type = map(object(
+variable "enable" {
+  description = "Determine whether to enable or disable Fargate profile"
+  type        = bool
+  default     = true
+}
+
+variable "subnets" {
+  description = "VPC subnets ID(s) where the Fargate profiles will be created"
+  type        = list(string)
+}
+
+variable "selectors" {
+  description = "Namespace selectors of Fargate profile"
+  type = set(object(
     {
-      enable  = optional(bool, true)
-      subnets = list(string)
-      selectors = set(object(
-        {
-          namespace = string
-          labels    = optional(map(string))
-        }
-      ))
+      namespace = string
+      labels    = optional(map(string), null)
     }
   ))
-  default  = {}
-  nullable = false
+  nullable = true
 }
 
 variable "tags" {
